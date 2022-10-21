@@ -1,32 +1,56 @@
 import { Injectable } from '@angular/core';
 import { TrackModel } from '@core/models/tracks.model';
 import { Observable, of } from 'rxjs';
-import * as dataRaw from '../../../data/tracks.json'
+import { map, mergeMap, tap, catchError } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TrackService {
 
-  dataTracksTrending$: Observable<TrackModel[]> = of([])
-  dataTracksRandom$: Observable<any> = of([])
+  private readonly URL = environment.api;
 
-  constructor() {
-    const {data}: any = (dataRaw as any).default;
-    this.dataTracksTrending$ = of(data)
+  constructor(private http: HttpClient) {
+    
+  }
 
-    this.dataTracksRandom$ = new Observable((observer)=>{
-      
-      const trackExample: TrackModel ={
-        _id: 9,
-        name: 'Leve',
-        album: 'Cartel de Santa',
-        url: 'http://',
-        cover:'https://i.scdn.co/image/ab6761610000e5ebbd172041a059e4b6e46e2cfc'
-      }
-      setTimeout(() =>{
-        observer.next([trackExample])
-      }, 3500)
+  private skipById(listTracks: TrackModel[], id: number): Promise<TrackModel[]> {
+    return new Promise((resolve, reject) => {
+      const listTmp = listTracks.filter(a => a._id !== id)
+      resolve(listTmp)
     })
+  }
+
+
+//devuelve canciones trending
+  getAllTracks(): Observable<any> {
+    return this.http.get(`${this.URL}/tracks`)
+    .pipe(
+      map(({data}:any) =>{
+        return data
+      })
+    )
+  }
+
+  //devuelve canciones random
+  getAllRandom(): Observable<any> {
+    return this.http.get(`${this.URL}/tracks`)
+    .pipe(
+      mergeMap(({ data }: any) => this.skipById(data, 2)),
+      
+      /**map(({dataRevertida}) =>{
+        return dataRevertida.filter((track:TrackModel) => track._id !==1)
+      })*/
+
+      tap(data => console.log('HOLA',data)),
+      catchError((err)=> {
+        const{status, statusText} = err;
+        console.log('Algo pasó revisame', [status, statusText])
+
+        return of([])
+      })
+    )
   }
 }

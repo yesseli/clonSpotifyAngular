@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Element } from '@angular/compiler';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { TrackModel } from '@core/models/tracks.model';
 import { MultimediaService } from '@shared/services/multimedia.service';
 import { Subscription } from 'rxjs';
@@ -9,31 +10,32 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./media-player.component.css']
 })
 export class MediaPlayerComponent implements OnInit, OnDestroy {
-  mockCover: TrackModel = {
-    cover: 'https://i.scdn.co/image/ab67616d0000b27345ca41b0d2352242c7c9d4bc',
-    album: 'Gioli y Assia',
-    name: 'BEBE (Oficial)',
-    url: 'http://localhost/track.mp3',
-    _id: 1
-  }
+  @ViewChild('progressBar') progressBar:ElementRef = new ElementRef('')
 
   ListObservers$:Array<Subscription> = []
+  state: string='paused'
 
-  constructor(private multimediaService: MultimediaService) { }
+  constructor(public multimediaService: MultimediaService) { }
 
   ngOnInit(): void {
-    const observer1$: Subscription = this.multimediaService.callback.subscribe(
-      (response: TrackModel) => {
-        console.log('recibiendo cancion....', response);
-        
+    const observer1$ = this.multimediaService.playerStatus$
+    .subscribe(status => this.state = status)
 
-      }
-    )
     this.ListObservers$ = [observer1$]
-  }
+    }
+
 
   ngOnDestroy(): void {
     this.ListObservers$.forEach(u => u.unsubscribe())
-    console.log('SE DESTRUYÓ EL COMPONENTE')
   }
+
+  handlePosition(event: MouseEvent):void{
+    const elNative: HTMLElement = this.progressBar.nativeElement
+    const {clientX} = event
+    const {x , width} = elNative.getBoundingClientRect()
+    const clickX = clientX - x
+    const percentageFromX = (clickX *100) / width
+    this.multimediaService.seekAudio(percentageFromX)
+  }
+
 }

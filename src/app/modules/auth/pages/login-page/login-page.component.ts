@@ -37,9 +37,10 @@ export class LoginPageComponent implements OnInit {
     const {email, password} = this.formLogin.value
     this.authService.sendCredentials(email, password)
     .subscribe(responseOK => {
-      console.log('Sesión iniciada correctamente')
-      const {tokenSession, data} = responseOK
-      this.cookie.set('token', tokenSession,4, '/')
+      console.log('Sesión iniciada correctamente', responseOK)
+      const {data} = responseOK
+      const {token} = data
+      this.cookie.set('token', token, 4, '/')
       this.router.navigate(['/', 'tracks'])
     },
     err => {

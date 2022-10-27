@@ -5,14 +5,15 @@ import { map, mergeMap, tap, catchError } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 
+
 @Injectable({
   providedIn: 'root'
 })
 export class TrackService {
 
-  private readonly URL = environment.api;
+  private readonly URL = environment.api
 
-  constructor(private http: HttpClient) {
+  constructor(private httpClient: HttpClient) {
     
   }
 
@@ -25,8 +26,8 @@ export class TrackService {
 
 
 //devuelve canciones trending
-  getAllTracks(): Observable<any> {
-    return this.http.get(`${this.URL}/tracks`)
+  getAllTracks$(): Observable<any> {
+    return this.httpClient.get(`${this.URL}/tracks`)
     .pipe(
       map(({data}:any) =>{
         return data
@@ -35,20 +36,17 @@ export class TrackService {
   }
 
   //devuelve canciones random
-  getAllRandom(): Observable<any> {
-    return this.http.get(`${this.URL}/tracks`)
+  getAllRandom$(): Observable<any> {
+    return this.httpClient.get(`${this.URL}/tracks`)
     .pipe(
-      mergeMap(({ data }: any) => this.skipById(data, 2)),
+      mergeMap(({ data }: any) => this.skipById(data,2)),
       
       /**map(({dataRevertida}) =>{
         return dataRevertida.filter((track:TrackModel) => track._id !==1)
       })*/
 
-      tap(data => console.log('HOLA',data)),
       catchError((err)=> {
         const{status, statusText} = err;
-        console.log('Algo pasó revisame', [status, statusText])
-
         return of([])
       })
     )
